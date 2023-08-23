@@ -1,20 +1,30 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import { IsOptional, IsString } from 'class-validator';
+import { HydratedDocument } from 'mongoose';
+import { DefaultEntity } from 'src/entities/default.entity';
 
 export type UserDocument = HydratedDocument<User>;
 
 @Schema()
-export class User {
+export class User extends DefaultEntity {
   @Prop()
+  @IsString()
+  @IsOptional()
   username?: string;
 
   @Prop()
+  @IsString()
+  @IsOptional()
   password?: string;
 
   @Prop()
+  @IsString()
+  @IsOptional()
   email?: string;
 
   @Prop()
+  @IsString()
+  @IsOptional()
   phone?: string;
 
   //   @Prop()
