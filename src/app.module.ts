@@ -7,11 +7,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost/access-gate'),
+    MongooseModule.forRoot('mongodb://127.0.0.1:27017/access-gate'),
     AuthModule,
-    UsersModule,
+    UsersModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService]
 })
 export class AppModule {}
