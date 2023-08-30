@@ -24,4 +24,8 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+
+  verifyJwtToken(token: any) {
+    return this.jwtService.verify(token);
+  }
 }
