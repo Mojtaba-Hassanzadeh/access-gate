@@ -23,6 +23,16 @@ export class UsersController {
     return this.userService.createUser(input);
   }
 
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() input: UpdateUserInput) {
+    return this.userService.updateUser(id, input);
+  }
+
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.userService.deleteUser(id);
+  }
+
   @Get()
   search(@Query() query: SearchUserInput) {
     return `TODO`;
@@ -31,15 +41,5 @@ export class UsersController {
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.userService.findById(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() input: UpdateUserInput) {
-    return this.userService.updateUser(id, input);
-  }
-
-  @Delete(':id')
-  delet(@Param('id') id: string) {
-    return this.userService.deleteUser(id);
   }
 }

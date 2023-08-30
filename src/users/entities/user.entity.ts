@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema } from '@nestjs/mongoose';
 import {
   IsEmail,
   IsEnum,
@@ -8,12 +8,12 @@ import {
   Matches,
   ValidateIf,
 } from 'class-validator';
-import { CallbackError, HydratedDocument } from 'mongoose';
+import { CallbackError } from 'mongoose';
 import { DefaultEntity } from 'src/entities/default.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/auth/enums/role.enum';
-
-export type UserDocument = HydratedDocument<User>;
+import { Document } from 'src/types/document.type';
+import { SchemaFactory } from 'src/utils/schema-factory.util';
 
 @Schema()
 export class User extends DefaultEntity {
@@ -70,13 +70,14 @@ export class User extends DefaultEntity {
   validatePassword?: (password: string) => Promise<boolean>;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export type TUser = Document<User>;
+export const UserSchema = SchemaFactory(User);
 
 UserSchema.index({ username: 'text' });
 UserSchema.index({ username: 1 });
 
 UserSchema.pre('save', async function (next) {
-  const user = this as UserDocument;
+  const user = this as TUser;
   if (!user.password) {
     next();
     return;
