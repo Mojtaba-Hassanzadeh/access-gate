@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, PipelineStage } from 'mongoose';
+import { Model, PipelineStage, ProjectionType } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
-import { User } from './entities/user.entity';
+import { TUser, User } from './entities/user.entity';
 import { UpdateUserInput } from './dtos/update-user.dto';
 import { CreateUserInput } from './dtos/create-user.dto';
 import { SearchUserInput } from './dtos/search-user.dto';
 import { SearchData } from 'src/interfaces/search-data.interface';
 import { isNullOrUndefined } from 'src/utils/is-null-or-undefined.util';
+import { FindOneUserByEmailOrPhoneInput } from './dtos/find-user.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -73,6 +74,15 @@ export class UsersRepository {
 
   async findOneById(id: string): Promise<User> {
     return this.userModel.findById(id).exec();
+  }
+
+  async findOneByEmailOrPhone(
+    input: FindOneUserByEmailOrPhoneInput,
+  ): Promise<User | null> {
+    const { email, phone, options } = input;
+    if (email) return this.userModel.findOne({ email }, options).exec();
+    if (phone) return this.userModel.findOne({ phone }, options).exec();
+    return null;
   }
 
   async create(data: CreateUserInput): Promise<User> {
