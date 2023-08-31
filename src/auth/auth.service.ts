@@ -2,20 +2,35 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { SignupInput } from './dto/signup.dto';
 import { CoreOutput } from 'src/dtos/output.dto';
-import { SigninInput, SigninOutput } from './dto/signin.dto';
+import {
+  IsValidAndVerifiedAccountInput,
+  IsValidAndVerifiedAccountOutput,
+  SigninInput,
+  SigninOutput,
+} from './dto/signin.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { VerifyAccountInput } from './dto/verify-account.dto';
+import { TVerification, Verification } from './entities/verification.entity';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { TUser } from 'src/users/entities/user.entity';
+import { ForgetPasswordInput } from './dto/forget-password.dto';
+import { ChangePasswordInput } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    @InjectModel(Verification.name)
+    private readonly verificationModel: Model<TVerification>,
   ) {}
 
   async signup(input: SignupInput, clientId: string): Promise<CoreOutput> {
@@ -82,20 +97,106 @@ export class AuthService {
     }
   }
 
-  async validateUser(username: string, pass: string): Promise<any> {
-    const user = undefined; //await this.usersService.findOne(username);
-    if (user && user.password === pass) {
-      const { password, ...result } = user;
-      return result;
+  async verifyAccount(
+    verifyEmailInput: VerifyAccountInput,
+    clientId: string,
+  ): Promise<CoreOutput> {
+    try {
+      const { code } = verifyEmailInput;
+
+      const verification = await this.verificationModel
+        .findOne({
+          clientId,
+        })
+        .populate('user');
+
+      if (!verification) throw new NotFoundException('invalid token');
+
+      const isValid = await verification.validateCode(code);
+      if (!isValid) throw new NotFoundException('invalid token');
+
+      const user = verification.user as unknown as TUser;
+      user.isVerified = true;
+      await user.save();
+      return { success: true };
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
-    return null;
   }
 
-  async login(user: any) {
-    const payload = { username: user.username, sub: user.userId };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+  async isValidAndVerifiedAccount(
+    input: IsValidAndVerifiedAccountInput,
+  ): Promise<IsValidAndVerifiedAccountOutput> {
+    try {
+      const { email, phone } = input;
+      const options = {
+        _id: 1,
+        isVerified: 1,
+        password: 1,
+      };
+      const user = await this.usersService.findByEmailOrPhone({
+        email,
+        phone,
+        options,
+      });
+
+      if (!user) throw new NotFoundException('user not found');
+
+      return {
+        success: true,
+        isVerified: user.isVerified,
+        hasPassword: !!user.password,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async forgetPassword(
+    { email, phone }: ForgetPasswordInput,
+    clientId: string,
+  ): Promise<CoreOutput> {
+    try {
+      const user = await this.usersService.findByEmailOrPhone({
+        email,
+        phone,
+      });
+
+      if (!user) throw new NotFoundException('user not found');
+
+      // await this.sendVerificationCode({ email, phone }, clientId);
+      return {
+        success: true,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async changePassword(
+    { code, password }: ChangePasswordInput,
+    clientId: string,
+  ): Promise<CoreOutput> {
+    try {
+      const verification = await this.verificationModel
+        .findOne({
+          clientId,
+        })
+        .populate('user');
+
+      if (!verification) throw new NotFoundException('invalid token');
+
+      const isValid = await verification?.validateCode(code);
+      if (!isValid) throw new NotFoundException('invalid token');
+
+      const user = verification.user as unknown as TUser;
+      user.password = password;
+      await user.save();
+      await this.verificationModel.findByIdAndDelete(verification.id);
+      return { success: true };
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   verifyJwtToken(token: any) {
