@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   Request,
   UseGuards,
@@ -30,9 +31,10 @@ export class AuthController {
 
   @Get('signin')
   async signin(
-    @Request() req: SigninInput,
+    @Query() req: SigninInput,
     @ClientId() clientId: string,
   ): Promise<SigninOutput> {
+    console.log('req :>> ', req);
     return this.authService.signin(req, clientId);
   }
 

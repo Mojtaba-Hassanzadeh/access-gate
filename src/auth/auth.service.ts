@@ -63,6 +63,7 @@ export class AuthService {
     clientId: string,
   ): Promise<SigninOutput> {
     const { email, password, phone } = loginInput;
+    
     try {
       const options = {
         _id: 1,

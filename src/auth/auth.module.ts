@@ -11,33 +11,23 @@ import {
   Verification,
   VerificationSchema,
 } from './entities/verification.entity';
+import { JwtMiddleWare } from './middlewares/jwt.middleware';
 
 @Module({
   imports: [
-    UsersModule,
-    JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: '600s' },
-    }),
-
-    PassportModule.register({ defaultStrategy: 'jwt' }),
-    // JwtModule.registerAsync({
-    //   useFactory: (config: ConfigService) => {
-    //     return {
-    //       secret: config.get<string>('JWT_SECRET'),
-    //       signOptions: {
-    //         expiresIn: config.get<string | number>('JWT_EXPIRATION_TIME'),
-    //       },
-    //     };
-    //   },
-    //   inject: [ConfigService],
-    // }),
     MongooseModule.forFeature([
       { name: Verification.name, schema: VerificationSchema },
     ]),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtModule.register({
+      secret: jwtConstants.secret,
+      signOptions: { expiresIn: '365d' },
+    }),
+
+    UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, JwtMiddleWare],
   exports: [AuthService],
 })
 export class AuthModule {}

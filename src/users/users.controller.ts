@@ -9,18 +9,31 @@ import {
   Patch,
 } from '@nestjs/common';
 // import { CreateCatDto, UpdateCatDto, ListAllEntities } from './dto';
-import { CreateUserInput } from './dtos/create-user.dto';
+import { CreateUserByCEOInput, CreateUserInput } from './dtos/create-user.dto';
 import { SearchUserInput } from './dtos/search-user.dto';
 import { UpdateUserInput } from './dtos/update-user.dto';
 import { UsersService } from './users.service';
+import { CoreOutput } from 'src/dtos/output.dto';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { User } from './entities/user.entity';
+import { BossGuard } from 'src/auth/guards/boss.guard';
+import { Role } from 'src/auth/enums/role.enum';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
   @Post()
-  create(@Body() input: CreateUserInput) {
-    return this.userService.createUser(input);
+  // @BossGuard<MethodDecorator>(Role.CEO)
+  @Roles(Role.CEO)
+  async create(
+    @Body() input: CreateUserByCEOInput,
+    @GetUser() user: User,
+  ): Promise<CoreOutput> {
+    console.log('user :>> ', user);
+    return this.userService.createUserByCEO(input, user);
   }
 
   @Patch(':id')

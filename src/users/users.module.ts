@@ -7,18 +7,7 @@ import { UsersRepository } from './users.repository';
 
 @Module({
   imports: [
-    MongooseModule.forFeatureAsync([
-      {
-        name: User.name,
-        useFactory: () => {
-          const schema = UserSchema;
-          schema.pre('save', function () {
-            console.log('Hello from pre save');
-          });
-          return schema;
-        },
-      },
-    ]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   providers: [UsersService, UsersRepository],
   controllers: [UsersController],

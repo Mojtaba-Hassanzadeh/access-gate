@@ -12,6 +12,7 @@ export class JwtMiddleWare implements NestMiddleware {
     private readonly usersService: UsersService,
   ) {}
   async use(req: Request, res: Response, next: NextFunction) {
+    console.log('********', req);
     if ('authorization' in req.headers) {
       const bearerHeader = req.headers.authorization;
       const token = bearerHeader?.replace('Bearer ', '');

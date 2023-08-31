@@ -1,12 +1,13 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
-import { CreateUserInput } from './dtos/create-user.dto';
+import { CreateUserByCEOInput, CreateUserInput } from './dtos/create-user.dto';
 import { TUser, User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { isNullOrUndefined } from 'src/utils/is-null-or-undefined.util';
@@ -46,6 +47,30 @@ export class UsersService {
   ): Promise<User | null> {
     try {
       return await this.usersRepository.findOneByEmailOrPhone(input);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async createUserByCEO(
+    createUserDto: CreateUserByCEOInput,
+    ceoUser: User,
+  ): Promise<CoreOutput> {
+    const { email, phone } = createUserDto;
+    try {
+      const existUser = await this.usersRepository.findOneByEmailOrPhone({
+        email,
+        phone,
+      });
+      if (existUser) throw new ConflictException('user already wxists');
+
+      await this.usersRepository.create({
+        ...createUserDto,
+      });
+
+      return {
+        success: true,
+      };
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
